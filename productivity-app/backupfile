@@ -1,0 +1,452 @@
+<?php
+session_start();
+include "config/db.php";
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+?>
+<?php
+include "config/db.php"; 
+
+if (!isset($_SESSION['user_id'])) {
+    header("Location: index.php");
+    exit;
+}
+?>
+
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Productivity Dashboard</title>
+<style>
+  :root {
+    --bg-light: #f0f8ff;
+    --bg-dark: #1e1e2f;
+    --text-light: #000;
+    --text-dark: #fff;
+    --primary-dark: #5a8caf; 
+    --primary-light: #89c2d9; 
+    --card-bg: #ffffff;
+    --card-bg-dark: #2b2b3d;
+    --shadow: rgba(0,0,0,0.1) 0px 4px 12px;
+  }
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: all 0.3s;
+  }
+
+  body.dark {
+    background-color: var(--bg-dark);
+    color: var(--text-dark);
+  }
+
+  /* HEADER */
+  header {
+    background-color: var(--primary-dark);
+    color: #fff;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+  }
+
+  header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    text-align: center;
+  }
+
+  /* Tombol dark/light  */
+  #toggle-theme {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    background-color: var(--primary-light);
+    color: #fff;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  #toggle-theme:hover {
+    transform: scale(1.1);
+  }
+
+  /* NAVBAR */
+  nav {
+    background-color: var(--primary-light);
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0.5rem 0;
+  }
+  nav a {
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    transition: color 0.2s;
+  }
+  nav a:hover {
+    color: #ffe;
+  }
+
+  /* MAIN GRID */
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+  }
+
+  /* CARD SECTION */
+  section {
+    padding: 1.5rem;
+    border-radius: 12px;
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  body.dark section {
+    background-color: var(--card-bg-dark);
+  }
+
+  h2 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    color: var(--primary-dark);
+    text-align: center;
+  }
+  body.dark h2 {
+    color: var(--text-dark);
+  }
+
+  button {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--primary-light);
+    color: #fff;
+    transition: transform 0.2s;
+  }
+  button:hover {
+    transform: scale(1.05);
+  }
+
+  input {
+    padding: 0.5rem;
+    width: 70%;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 0.5rem;
+  }
+
+  ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 0.5rem;
+    width: 100%;
+  }
+
+  /* Item To-Do  */
+  li {
+    background-color: rgba(137,194,217,0.2);
+    margin: 0.3rem 0;
+    padding: 0.5rem;
+    border-radius: 5px;
+    transition: background 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  body.dark li {
+    background-color: rgba(255,255,255,0.1);
+  }
+
+  /* Tombol hapus */
+  .delete-btn {
+    background-color: #transparent;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 0.3rem 0.7rem;
+    margin-left: auto;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .delete-btn:hover {
+    background-color: #d62828;
+    transform: scale(1.05);
+  }
+
+  /* JAM DIGITAL BESAR & TENGAH */
+  #clock-section #clock {
+    font-size: 2.8rem;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 1rem;
+  }
+
+  /* TO-DO CENTERING */
+  #todo-section {
+    text-align: center;
+  }
+  #todo-section .todo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+
+  /* Quotes */
+  #quote-section {
+    text-align: center;
+  }
+
+  /* FOOTER */
+  footer {
+    background-color: var(--primary-dark);
+    color: #fff;
+    text-align: center;
+    padding: 1rem;
+    margin-top: auto;
+  }
+/* tabel to do list*/
+
+  .todo-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 400px;
+}
+
+.todo-list li {
+  background: #f4f9fc;
+  padding: 10px 15px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.todo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.delete-btn {
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.todo-item.done span {
+  text-decoration: line-through;
+  color: gray;
+}
+
+
+
+</style>
+</head>
+<body>
+<header>
+  <h1>Productivity Dashboard</h1>
+  <button id="toggle-theme">🌙/☀️</button>
+</header>
+
+<nav>
+  <a href="#clock-section">Jam</a>
+  <a href="#todo-section">To-Do</a>
+  <a href="#quote-section">Quotes</a>
+</nav>
+<br>
+<h2>Welcome to Dashboard 🎉</h2>
+<main>
+  <!-- JAM DIGITAL -->
+  <section id="clock-section">
+    <h2>Jam Sekarang</h2>
+    <div id="clock">00:00:00</div>
+  </section>
+
+  <!-- TO-DO LIST -->
+  <section id="todo-section">
+    <h2>To-Do List</h2>
+    <div class="todo-container">
+<form action="add_task.php" method="POST">
+  <input type="text" name="task" placeholder="Tulis aktivitas..." required>
+  <button type="submit">Tambah</button>
+</form>
+
+<?php
+$user_id = $_SESSION['user_id'];
+$query = "SELECT * FROM tasks WHERE user_id = $user_id";
+$result = mysqli_query($conn, $query);
+?>
+
+<ul class="todo-list">
+<?php if (mysqli_num_rows($result) > 0): ?>
+    
+    <?php while ($row = mysqli_fetch_assoc($result)): ?>
+        <li class="todo-item <?= $row['status'] == 'done' ? 'done' : '' ?>">
+
+            <form action="update_status.php" method="POST">
+                <input type="hidden" name="id" value="<?= $row['id'] ?>">
+                <input type="checkbox"
+                       onchange="this.form.submit()"
+                       <?= $row['status'] == 'done' ? 'checked' : '' ?>>
+            </form>
+
+            <span><?= htmlspecialchars($row['task']) ?></span>
+
+            <a href="delete_task.php?id=<?= $row['id'] ?>"
+               onclick="return confirm('Hapus tugas ini?')"
+               class="delete-btn">❌</a>
+        </li>
+    <?php endwhile; ?>
+
+<?php else: ?>
+    <li>Belum ada tugas</li>
+<?php endif; ?>
+</ul>
+    </div>
+  </section>
+
+  <!-- QUOTES INSPIRATIF -->
+  <section id="quote-section">
+    <h2>Quotes Inspiratif</h2>
+    <p id="quote">Loading...</p>
+    <button id="new-quote">Quotes Baru</button>
+  </section>
+</main>
+
+
+<a href="auth/logout.php">Logout</a>
+
+<footer>
+  &copy; 2025 Rasyidah Nuraini - A11.2024.15721
+</footer>
+
+<script>
+  // JAM DIGITAL
+  function updateClock() {
+    const clock = document.getElementById('clock');
+    const now = new Date();
+    clock.textContent = now.toLocaleTimeString();
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // QUOTES INSPIRATIF
+  const quotes = [
+    "you deserve all the good things in life.",
+    "Tidak semua usaha dipermudah, tapi yang berusaha pasti akan berbuah.",
+    "Kalo mimpinya besar usahanya ga boleh kecil.",
+    "Apapun hasilnya, banggalah terhadap setiap proses yang kamu lalui!",
+    "Ga perlu lebih hebat dari orang lain, cukup lebih baik dari diri kita kemarin",
+    "Tetaplah menjadi baik, walau tidak diperlakukan dengan baik",
+    "Sesekali banggalah terhadap dirimu sendiri, karena tidak semua orang mampu melewati apa yang telah kamu lewati"
+  ];
+  document.getElementById('new-quote').addEventListener('click', () => {
+    const q = quotes[Math.floor(Math.random() * quotes.length)];
+    document.getElementById('quote').textContent = q;
+  });
+  document.getElementById('new-quote').click();
+
+  // TO-DO LIST DENGAN TOMBOL HAPUS
+
+
+  addBtn.addEventListener('click', addTodo);
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTodo();
+  });
+
+  function addTodo() {
+    if (input.value.trim() !== '') {
+      const li = document.createElement('li');
+
+      // teks tugas
+      const taskText = document.createElement('span');
+      taskText.textContent = input.value;
+
+      // tombol hapus
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Hapus';
+      delBtn.className = 'delete-btn';
+      delBtn.addEventListener('click', () => li.remove());
+
+      // gabungkan teks & tombol ke dalam <li>
+      li.appendChild(taskText);
+      li.appendChild(delBtn);
+
+      // tambahkan ke list
+      todoList.appendChild(li);
+      input.value = '';
+    }
+  }
+
+  // DARK / LIGHT MODE
+  document.getElementById('toggle-theme').addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+  });
+</script>
+</body>
+</html>
+
+
+// TO-DO LIST DENGAN TOMBOL HAPUS
+  addBtn.addEventListener('click', addTodo);
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addTodo();
+  });
+
+  function addTodo() {
+    if (input.value.trim() !== '') {
+      const li = document.createElement('li');
+
+      // teks tugas
+      const taskText = document.createElement('span');
+      taskText.textContent = input.value;
+
+      // tombol hapus
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Hapus';
+      delBtn.className = 'delete-btn';
+      delBtn.addEventListener('click', () => li.remove());
+
+      // gabungkan teks & tombol ke dalam <li>
+      li.appendChild(taskText);
+      li.appendChild(delBtn);
+
+      // tambahkan ke list
+      todoList.appendChild(li);
+      input.value = '';
+    }
+  }
